@@ -1,0 +1,35 @@
+{
+  "name": "qencode-poc",
+  "version": "1.0.0",
+  "description": "Browser upload initiated encoding with Qencode",
+  "main": "script.js",
+  "scripts": {
+    "test": "eslint ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "*.min.js"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2019
+    },
+    "env": {
+      "browser": true,
+      "es2017": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "prefer-arrow-callback": "error",
+      "indent": [
+        "error",
+        2,
+        {"MemberExpression": 0}
+      ]
+    }
+  }
+}
