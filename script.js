@@ -1,6 +1,11 @@
-document.getElementById("input").addEventListener("input", ()=>{
+document.querySelector("button").addEventListener("click", ()=>{
+  document.querySelector("input").value = "";
+});
+
+document.querySelector("input").addEventListener("input", (evt)=>{
+const uploadDOMElement = evt.target;
+const file = uploadDOMElement.files[0];
 const apiKey = "5ea06e9947134";
-const uploadFileName = inp.files[0].name // page should have <input type="file"> for upload selector (i.e. inp=document.createElement("input");inp.type="file";document.body.appendChild(inp);
 const targetBucket = "test-bucket-tyler";
 const targetAccessKey = "GOOG1ERY4IOIV6NSUVYR2YNRCETCSZEJ2X3PCCMD3ORDN2LZPGK4D5J3S7JTA";
 const targetSecret = "+atHC9PvyeMT64vYX+tBcWtyBPEgkLrqj0A1OtvL";
@@ -52,8 +57,8 @@ function getUploadUrl() {
     headers: {
       "content-type": "application/x-www-form-urlencoded",
       "Tus-Resumable": "1.0.0",
-      "Upload-Length": inp.files[0].size,
-      "Upload-Metadata": `filename ${uploadFileName}`
+      "Upload-Length": file.size,
+      "Upload-Metadata": `filename ${file.name}`
     },
     method: "post",
     body:""
@@ -69,7 +74,7 @@ function uploadFileAndStartTask() {
 }
 
 function uploadFile() {
-  log("Uploading file");
+  log("Uploading file (there is no progress bar in this POC, please wait)");
   return fetch(uploadUrl, {
     headers: {
       "Tus-Resumable": "1.0.0",
@@ -77,10 +82,10 @@ function uploadFile() {
       "Upload-Offset": "0"
     },
     method: "PATCH",
-    body: inp.files[0]
+    body: file
   }).then(resp=>{
     console.dir(Array.from(resp.headers));
-    log(`Upload ${resp.headers.get("upload-offset") === String(inp.files[0].size) ? "" : "partially "} complete`);
+    log(`Upload ${resp.headers.get("upload-offset") === String(file.size) ? "" : "partially "} complete`);
   });
 }
 
@@ -95,7 +100,7 @@ function startTask() {
           //"optimize_bitrate": 1, // per-title encoding for stream based processing
           //"adjust_crf": "-1",
           "destination": {
-            "url": `s3://storage.googleapis.com/${targetBucket}/${encodeURIComponent(inp.files[0].name)}`,
+            "url": `s3://storage.googleapis.com/${targetBucket}/${encodeURIComponent(file.name)}`,
             "key": targetAccessKey,
             "secret": encodeURIComponent(targetSecret)
           }
@@ -115,7 +120,6 @@ function startTask() {
     return resp.json();
   }).then(resp=>{
     statusUrl = resp.status_url;
-    log(statusUrl);
   });
 }
 
@@ -141,7 +145,7 @@ function wait(ms = 5000) {
 
 function log(text = "") {
   let outputElement = document.createElement("p");
-  p.innerText = text;
+  outputElement.textContent = text;
   document.body.appendChild(outputElement);
 }
 });
