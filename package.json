@@ -27,7 +27,8 @@
       "prefer-arrow-callback": "error",
       "indent": [
         "error",
-        2
+        2,
+        {"MemberExpression": 0}
       ]
     }
   }
