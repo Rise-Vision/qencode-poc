@@ -16,3 +16,9 @@
 
  1. Start a local http server and load test.html
  2. Choose a file to upload
+
+### See Also
+
+This [repo] from Qencode which has a progress bar but requires modification.
+
+[repo]: https://github.com/qencode-dev/video-transcoder.online
