@@ -6,6 +6,7 @@
 
 ### POC Limitations
 
+ - no error handling
  - hard coded destination bucket
  - hard coded bucket credentials
  - hard coded api key
