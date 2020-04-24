@@ -9,8 +9,8 @@ document.querySelector("input").addEventListener("input", (evt)=>{
   const uploadSteps = [
     getSessionToken,
     createTask,
-    getUploadUrl,
-    uploadFileAndStartTask,
+    startUpload,
+    startTask,
     checkStatus];
 
   let sessionToken, taskToken, uploadRequestUrl, uploadUrl, statusUrl;
@@ -47,41 +47,29 @@ document.querySelector("input").addEventListener("input", (evt)=>{
     });
   }
 
-  function getUploadUrl() {
-    log("Retrieving upload url");
-    return fetch(`${uploadRequestUrl}/${taskToken}`, {
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        "Tus-Resumable": "1.0.0",
-        "Upload-Length": file.size,
-        "Upload-Metadata": `filename ${file.name}`
-      },
-      method: "post",
-      body:""
-    }).then(resp=>{
-      console.dir(Array.from(resp.headers));
-      uploadUrl = resp.headers.get("location");
-    });
-  }
+  function startUpload() {
+    log("Starting upload");
 
-  function uploadFileAndStartTask() {
-    // return Promise.all([uploadFile(), startTask()]);
-    return uploadFile().then(startTask);
-  }
+    let tusUpload;
+    return new Promise((res, rej)=>{
+      let  options = {
+        endpoint: `${uploadRequestUrl}/${taskToken}`,
+        retryDelays: [0, 1000, 3000, 5000],
+        metadata: {
+          filename: file.name,
+          filetype: file.type
+        },
+        onError: err=>{log(err); rej();},
+        onProgress: (bytesUploaded, bytesTotal)=>{
+          let pct = (`${(bytesUploaded / bytesTotal * 100).toFixed(2)}%`);
+          document.querySelector("#uploadProgress").textContent = pct;
+          console.log(bytesUploaded, bytesTotal);
+        },
+        onSuccess: ()=>{uploadUrl = tusUpload.url; res();}
+      };
 
-  function uploadFile() {
-    log("Uploading file (there is no progress bar in this POC, please wait)");
-    return fetch(uploadUrl, {
-      headers: {
-        "Tus-Resumable": "1.0.0",
-        "content-type": "application/offset+octet-stream",
-        "Upload-Offset": "0"
-      },
-      method: "PATCH",
-      body: file
-    }).then(resp=>{
-      console.dir(Array.from(resp.headers));
-      log(`Upload ${resp.headers.get("upload-offset") === String(file.size) ? "" : "partially "} complete`);
+      tusUpload = new tus.Upload(file, options);
+      tusUpload.start();
     });
   }
 
@@ -153,6 +141,7 @@ document.querySelector("input").addEventListener("input", (evt)=>{
   }
 
   function log(text = "") {
+    if (typeof text === "object") {text = text.toString();}
     let outputElement = document.createElement("p");
     outputElement.textContent = `${(new Date()).toLocaleString()}: ${text}`;
     document.body.appendChild(outputElement);

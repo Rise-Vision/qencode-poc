@@ -13,10 +13,14 @@
   },
   "eslintConfig": {
     "ignorePatterns": [
+      "tus.js",
       "*.min.js"
     ],
     "parserOptions": {
       "ecmaVersion": 2019
+    },
+    "globals": {
+      "tus": false
     },
     "env": {
       "browser": true,
@@ -28,7 +32,9 @@
       "indent": [
         "error",
         2,
-        {"MemberExpression": 0}
+        {
+          "MemberExpression": 0
+        }
       ]
     }
   }
