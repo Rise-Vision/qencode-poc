@@ -1,7 +1,3 @@
-document.querySelector("button").addEventListener("click", ()=>{
-  document.querySelector("input").value = "";
-});
-
 document.querySelector("input").addEventListener("input", (evt)=>{
   const uploadDOMElement = evt.target;
   const file = uploadDOMElement.files[0];
@@ -97,8 +93,6 @@ document.querySelector("input").addEventListener("input", (evt)=>{
         "format": [
           {
             "output": "mp4",
-            //"optimize_bitrate": 1, // per-title encoding for stream based processing
-            //"adjust_crf": "-1",
             "destination": {
               "url": `s3://storage.googleapis.com/${targetBucket}/${encodeURIComponent(file.name)}`,
               "key": targetAccessKey,
@@ -123,8 +117,7 @@ document.querySelector("input").addEventListener("input", (evt)=>{
     });
   }
 
-  function checkStatus(attempt = 1) {
-    if (attempt === 10) { return Promise.resolve(); }
+  function checkStatus(attempt = 0) {
     return wait(5000)
     .then(()=>fetch(statusUrl,{
       headers: {
@@ -133,19 +126,35 @@ document.querySelector("input").addEventListener("input", (evt)=>{
       method:"post",
       body:`task_tokens=${taskToken}`
     })).then(resp=>resp.json()).then(resp=>{
-      log(`Current status: ${resp.statuses[taskToken].status}`);
-      return resp.statuses[taskToken].status === "completed" ? "" : checkStatus(attempt + 1);
+      if (!resp.statuses) return;
+      let taskStatus = resp.statuses[taskToken];
+      if (!taskStatus) return;
+
+      if (resp.statuses[taskToken].status_url) {statusUrl = taskStatus.status_url;}
+
+      log(`Current status: ${taskStatus.status} - Percent: ${taskStatus.percent}`);
+      console.dir(taskStatus);
+      if (taskStatus.status === "completed") {
+        if (taskStatus.videos) {
+          let sourceSize = (taskStatus.source_size/Math.pow(2, 20)).toFixed(2);
+          let destinationSize = (Number(taskStatus.videos[0].size)).toFixed(2);
+          log(`Compression: ${sourceSize} MiB => ${destinationSize}MiB`);
+        }
+        return Promise.resolve();
+      } else {
+        return checkStatus(attempt + 1);
+      }
     });
   }
 
   function wait(ms = 5000) {
-    if (ms < 0 || ms > 60000) {ms = 5000;}
+    if (ms < 1000 || ms > 60000) {ms = 5000;}
     return new Promise(res=>setTimeout(res, ms));
   }
 
   function log(text = "") {
     let outputElement = document.createElement("p");
-    outputElement.textContent = text;
+    outputElement.textContent = `${(new Date()).toLocaleString()}: ${text}`;
     document.body.appendChild(outputElement);
   }
 });
